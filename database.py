@@ -209,12 +209,33 @@ class DataBase:
           patches.append(patch[0])
         return patches
 
+    def get_items_affected(self, patch):
+        patch = patch.replace("'", "''")
+        patch = self.get_patch_id(patch)
+        sql = f"""SELECT i.name FROM item_changes ic 
+        LEFT JOIN items i ON i.ROWID = ic.item
+        WHERE ic.patch = {patch}
+        GROUP BY i.name
+        ORDER BY i.name"""
+        return self.execute(sql)
+
+    def get_heroes_affected(self, patch):
+        patch = patch.replace("'", "''")
+        patch = self.get_patch_id(patch)
+        sql = f"""SELECT h.name FROM hero_changes hc 
+        LEFT JOIN heroes h ON h.ROWID = hc.hero
+        WHERE hc.patch = {patch}
+        GROUP BY hero
+        ORDER BY h.name"""
+        return self.execute(sql)
+
     def get_general_history(self, patch):
         patch = patch.replace("'", "''")
         patch = self.get_patch_id(patch)
         sql = f"""SELECT gc.info FROM general_changes gc
         LEFT JOIN patches p on p.ROWID = gc.patch
-        WHERE gc.patch = '{patch}'"""
+        WHERE gc.patch = '{patch}'
+        ORDER BY p.version ASC"""
         return self.execute(sql)
 
     def get_hero_history(self, hero):
@@ -228,7 +249,7 @@ class DataBase:
                 LEFT JOIN patches p ON hc.patch = p.ROWID
                 WHERE hc.hero = {hero}
         ) a ON p.version = a.version
-        ORDER BY p.rowid DESC;"""
+        ORDER BY p.version ASC"""
         return self.execute(sql)
 
     def get_item_history(self, item):
@@ -241,7 +262,7 @@ class DataBase:
                 LEFT JOIN patches p ON p.rowid = ic.patch
                 WHERE ic.item = {item}
         ) a ON p.version = a.version
-        ORDER BY p.rowid DESC"""
+        ORDER BY p.version ASC"""
         return self.execute(sql)
 
     def close(self, conn):

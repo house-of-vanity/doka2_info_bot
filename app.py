@@ -45,8 +45,8 @@ def smart_append(line, text, lenght=4000):
 def shorten(text):
     max_len = 4000
     if len(text) > max_len:
-        text = text[len(text)-max_len:]
-    return 'Message too long...\n' + text
+        text = 'Message too long...\n' + text[len(text)-max_len:]
+    return text
 
 def button(update, context):
     query = update.callback_query
@@ -68,11 +68,34 @@ def button(update, context):
         reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data='patches'),]])
         text = f'Patch *{patch}*\n'
         general_info = DB.get_general_history(patch)
-        i = 1
-        for change in general_info:
-            text += f" {i} - {change[0]}\n"
-            i += 1
-        query.edit_message_text(text, parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
+        heroes_affected = DB.get_heroes_affected(patch)
+        items_affected = DB.get_items_affected(patch)
+        if len(general_info) == 0:
+            text += f"There isn't general changes in {patch}\n"
+        else:
+            text += "*General changes:\n*"
+            i = 1
+            for change in general_info:
+                text += f" {i} - {change[0]}\n"
+                i += 1
+        if len(heroes_affected) == 0:
+            text += f"There isn't heroes changed in {patch}"
+        else:
+            i = 1
+            text += "*Heroes changed:\n*"
+            for hero in heroes_affected:
+                text += f" {i} - {hero[0]}\n"
+                i += 1
+        if len(items_affected) == 0:
+            text += f"There isn't items changed in {patch}"
+        else:
+            i = 1
+            text += "*Items changed:\n*"
+            for item in items_affected:
+                text += f" {i} - {item[0]}\n"
+                i += 1
+            
+        query.edit_message_text(shorten(text), parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
     if query.data.split('_')[0] == 'item':
         keyboard = [[InlineKeyboardButton("Back", callback_data='items')]]
         if 'expand' in query.data:
